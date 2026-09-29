@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>三角洲装备维修计算器</title>
+<link rel="icon" href="favicon.ico" type="image/x-icon">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #1a1d23;
+    --bg-section: #21242b;
+    --border: #2a2d35;
+    --text: #d1d5db;
+    --text-heading: #f1f5f9;
+    --text-muted: #9ca3af;
+    --text-dim: #6b7280;
+    --text-placeholder: #4b5563;
+    --text-result: #f1f5f9;
+    --input-bg: #181a1f;
+    --input-border: #353840;
+    --input-text: #e5e7eb;
+    --option-bg: #181a1f;
+    --option-text: #e5e7eb;
+    --focus: #6366f1;
+    --method-title: #818cf8;
+    --divider: #2a2d35;
+    --result-row-border: #262930;
+    --highlight: #f59e0b;
+    --good: #4ade80;
+    --bad: #ef4444;
+    --chevron: %236b7280;
+  }
+
+  :root[data-theme="light"] {
+    --bg: #f3f4f6;
+    --bg-section: #ffffff;
+    --border: #e5e7eb;
+    --text: #374151;
+    --text-heading: #111827;
+    --text-muted: #6b7280;
+    --text-dim: #9ca3af;
+    --text-placeholder: #9ca3af;
+    --text-result: #111827;
+    --input-bg: #f9fafb;
+    --input-border: #d1d5db;
+    --input-text: #1f2937;
+    --option-bg: #ffffff;
+    --option-text: #1f2937;
+    --focus: #6366f1;
+    --method-title: #6366f1;
+    --divider: #e5e7eb;
+    --result-row-border: #f3f4f6;
+    --highlight: #d97706;
+    --good: #16a34a;
+    --bad: #dc2626;
+    --chevron: %239ca3af;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .container { width: 100%; max-width: 480px; }
+
+  .header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  h1 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-heading);
+    letter-spacing: 0.02em;
+    margin-bottom: 0;
+  }
+
+  .theme-toggle {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg-section);
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, color 0.2s;
+    flex-shrink: 0;
+  }
+  .theme-toggle:hover { color: var(--text-heading); }
+
+  .section {
+    background: var(--bg-section);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 14px;
+  }
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  select, input {
+    width: 100%;
+    height: 42px;
+    padding: 0 12px;
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 6px;
+    color: var(--input-text);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s;
+    appearance: none;
+  }
+
+  select {
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+    cursor: pointer;
+  }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  }
+  :root[data-theme="light"] select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  }
+
+  select:focus, input:focus { border-color: var(--focus); }
+
+  select:invalid, select option[value=""] { color: var(--text-dim); }
+
+  .input-row-split {
+    display: flex;
+    gap: 12px;
+  }
+  .input-half {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .eq-group { margin-bottom: 14px; }
+  .eq-group:last-child { margin-bottom: 0; }
+
+  .eq-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .eq-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  select.eq-select option { color: var(--option-text); background: var(--option-bg); }
+  select.eq-select option.q3 { color: #3b82f6; }
+  select.eq-select option.q4 { color: #7c3aed; }
+  select.eq-select option.q5 { color: #d97706; }
+  select.eq-select option.q6 { color: #ef4444; }
+
+  /* results */
+  .result-block { margin-bottom: 20px; }
+  .result-block:last-child { margin-bottom: 0; }
+
+  .result-method {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--method-title);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--divider);
+  }
+
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--result-row-border);
+    font-size: 14px;
+  }
+  .result-row:last-child { border-bottom: none; }
+
+  .result-label { color: var(--text-muted); }
+  .result-value {
+    font-weight: 600;
+    color: var(--text-result);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .result-value.highlight { color: var(--highlight); }
+  .result-value.good { color: var(--good); }
+  .result-value.bad { color: var(--bad); }
+
+  .sellable-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .sellable-yes { background: rgba(22, 163, 74, 0.12); color: var(--good); }
+  .sellable-no  { background: rgba(220, 38, 38, 0.12); color: var(--bad); }
+
+  .placeholder {
+    text-align: center;
+    color: var(--text-placeholder);
+    font-size: 13px;
+    padding: 24px 0;
+  }
+
+  .error-msg {
+    color: var(--bad);
+    font-size: 13px;
+    margin-top: 4px;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--divider);
+    margin: 16px 0;
+  }
+
+  .footer {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-dim);
+    padding: 8px 0 24px;
+  }
+  .footer a {
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+  .footer a:hover { color: var(--text-heading); }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header-row">
+    <h1>三角洲装备维修计算器</h1>
+    <button class="theme-toggle" id="themeToggle" title="切换主题">&#9788;</button>
+  </div>
+
+  <!-- equipment selection -->
+  <div class="section">
+    <div class="section-title">选择装备</div>
+    <div class="eq-group">
+      <div class="eq-label">头盔</div>
+      <select id="headSelect" class="eq-select">
+        <option value="">-- 请选择头盔 --</option>
+      </select>
+    </div>
+    <div class="eq-group">
+      <div class="eq-label">护甲</div>
+      <select id="armorSelect" class="eq-select">
+        <option value="">-- 请选择护甲 --</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- inputs -->
+  <div class="section">
+    <div class="section-title">输入参数</div>
+    <div class="input-row-split">
+      <div class="input-half">
+        <label for="currentDurability">当前耐久</label>
+        <input type="number" id="currentDurability" step="0.1" min="0" placeholder="">
+      </div>
+      <div class="input-half">
+        <label for="currentMax">当前耐久上限</label>
+        <input type="number" id="currentMax" step="0.1" min="0.1" placeholder="">
+      </div>
+    </div>
+  </div>
+
+  <!-- results -->
+  <div class="section" id="resultsSection" style="display:none;">
+    <div class="section-title">计算结果</div>
+    <div id="resultsContent"></div>
+  </div>
+  <div class="section" id="placeholderSection">
+    <div class="placeholder">请选择装备并输入参数后自动计算</div>
+  </div>
+</div>
+
+<div class="footer">
+  by <a href="https://space.bilibili.com/4988790" target="_blank" rel="noopener">ez661</a>
+</div>
+
+<script>
+// embedded config mirroring config.json
+const CONFIG = {
+  head: [
+    { id:0, name:"GT5 指挥官头盔", quality:6, init:60, sell:999, loss:0.07, m1:0.03, m2:0.05, m3:0.08, m4:0.56 },
+    { id:1, name:"DICH-9 重型头盔", quality:6, init:50, sell:999, loss:0.10, m1:0.03, m2:0.05, m3:0.08, m4:0.65 },
+    { id:2, name:"H70 精英头盔", quality:6, init:55, sell:38, loss:0.16, m1:0.04, m2:0.05, m3:0.09, m4:0.96 },
+    { id:16, name:"H70 夜视精英头盔", quality:6, init:55, sell:999, loss:0.16, m1:0.04, m2:0.05, m3:0.09, m4:0.96 },
+    { id:3, name:"GN 重型头盔", quality:5, init:50, sell:35, loss:0.07, m1:0.05, m2:0.08, m3:0.64, m4:1.19 },
+    { id:4, name:"GN 重型夜视头盔", quality:5, init:50, sell:35, loss:0.07, m1:0.05, m2:0.08, m3:0.64, m4:1.19 },
+    { id:5, name:"DICH-1 战术头盔", quality:5, init:40, sell:28, loss:0.16, m1:0.05, m2:0.07, m3:0.45, m4:0.86 },
+    { id:6, name:"H09 防暴头盔", quality:5, init:45, sell:31, loss:0.16, m1:0.06, m2:0.09, m3:0.79, m4:1.51 },
+    { id:7, name:"MASK-1 铁壁头盔", quality:5, init:75, sell:52, loss:0.07, m1:0.11, m2:0.17, m3:1.42, m4:2.68 },
+    { id:8, name:"GT1 战术头盔", quality:4, init:48, sell:33, loss:0.10, m1:0.12, m2:0.88, m3:1.49, m4:2.88 },
+    { id:9, name:"DICH 训练头盔", quality:4, init:35, sell:24, loss:0.15, m1:0.11, m2:0.61, m3:1.03, m4:1.98 },
+    { id:10, name:"MHS 战术头盔", quality:4, init:30, sell:21, loss:0.12, m1:0.12, m2:0.80, m3:1.32, m4:2.64 },
+    { id:11, name:"D6 战术头盔", quality:4, init:55, sell:38, loss:0.08, m1:0.21, m2:1.49, m3:2.53, m4:4.60 },
+    { id:12, name:"MC201 防弹头盔", quality:3, init:34, sell:23, loss:0.13, m1:1.29, m2:1.97, m3:3.29, m4:7.40 },
+    { id:13, name:"DAS 防弹头盔", quality:3, init:40, sell:28, loss:0.09, m1:1.46, m2:2.28, m3:3.64, m4:7.28 },
+    { id:14, name:"H07 战术头盔", quality:3, init:20, sell:14, loss:0.10, m1:1.20, m2:1.80, m3:3.00, m4:6.00 },
+    { id:15, name:"防暴头盔", quality:3, init:28, sell:19, loss:0.06, m1:1.65, m2:2.39, m3:4.39, m4:8.77 }
+  ],
+  armor: [
+    { id:0, name:"泰坦防弹装甲", quality:6, init:150, sell:999, loss:0.09, m1:0.10, m2:0.17, m3:0.26, m4:0.90 },
+    { id:1, name:"特里克 MAS2.0 装甲", quality:6, init:125, sell:999, loss:0.06, m1:0.10, m2:0.17, m3:0.27, m4:0.59 },
+    { id:2, name:"HA-2 重型防弹衣", quality:6, init:115, sell:80, loss:0.11, m1:0.12, m2:0.19, m3:0.30, m4:0.59 },
+    { id:3, name:"金刚防弹衣", quality:6, init:140, sell:999, loss:0.15, m1:0.10, m2:0.17, m3:0.27, m4:0.82 },
+    { id:4, name:"重型突击背心", quality:5, init:125, sell:87, loss:0.10, m1:0.15, m2:0.25, m3:1.25, m4:1.91 },
+    { id:5, name:"FS 复合防弹衣", quality:5, init:105, sell:73, loss:0.09, m1:0.18, m2:0.29, m3:0.82, m4:1.23 },
+    { id:6, name:"HVK-2 防弹衣", quality:5, init:115, sell:80, loss:0.14, m1:0.16, m2:0.27, m3:1.45, m4:2.20 },
+    { id:7, name:"精英防弹背心", quality:5, init:95, sell:66, loss:0.12, m1:0.19, m2:0.32, m3:1.19, m4:1.82 },
+    { id:8, name:"HMP 特勤防弹衣", quality:4, init:80, sell:56, loss:0.10, m1:0.20, m2:1.36, m3:2.12, m4:3.27 },
+    { id:9, name:"MK-2 战术背心", quality:4, init:110, sell:77, loss:0.09, m1:0.41, m2:1.43, m3:2.22, m4:3.34 },
+    { id:10, name:"DT-AVS 防弹衣", quality:4, init:100, sell:70, loss:0.10, m1:0.50, m2:1.27, m3:2.00, m4:3.00 },
+    { id:11, name:"突击手防弹背心", quality:4, init:90, sell:62, loss:0.18, m1:0.24, m2:1.19, m3:1.89, m4:2.84 },
+    { id:12, name:"武士防弹背心", quality:4, init:80, sell:56, loss:0.06, m1:0.50, m2:1.88, m3:3.01, m4:4.42 },
+    { id:13, name:"射手战术背心", quality:3, init:85, sell:59, loss:0.07, m1:1.58, m2:2.14, m3:3.29, m4:4.94 },
+    { id:14, name:"TG-H 防弹衣", quality:3, init:75, sell:53, loss:0.09, m1:1.95, m2:2.63, m3:4.27, m4:6.21 },
+    { id:15, name:"HVK 快拆防弹衣", quality:3, init:60, sell:42, loss:0.04, m1:1.60, m2:2.13, m3:3.39, m4:5.24 },
+    { id:16, name:"制式防弹背心", quality:3, init:50, sell:35, loss:0.05, m1:1.58, m2:2.50, m3:3.96, m4:5.94 }
+  ]
+};
+
+const PACKAGE_NAMES = ['自制维修包', '标准维修包', '精密维修包', '高级维修组合'];
+const QUALITY_CLASSES = { 3: 'q3', 4: 'q4', 5: 'q5', 6: 'q6' };
+
+// DOM refs
+const headSelect = document.getElementById('headSelect');
+const armorSelect = document.getElementById('armorSelect');
+const themeToggle = document.getElementById('themeToggle');
+const currentDurabilityInput = document.getElementById('currentDurability');
+const currentMaxInput = document.getElementById('currentMax');
+const resultsSection = document.getElementById('resultsSection');
+const placeholderSection = document.getElementById('placeholderSection');
+const resultsContent = document.getElementById('resultsContent');
+
+// populate select options
+function populateSelect(selectEl, items) {
+  selectEl.innerHTML = `<option value="">${selectEl === headSelect ? '-- 请选择头盔 --' : '-- 请选择护甲 --'}</option>`;
+  items.forEach((item, idx) => {
+    const opt = document.createElement('option');
+    opt.value = idx;
+    opt.textContent = item.name;
+    opt.className = QUALITY_CLASSES[item.quality] || '';
+    selectEl.appendChild(opt);
+  });
+}
+
+populateSelect(headSelect, CONFIG.head);
+populateSelect(armorSelect, CONFIG.armor);
+
+// mutually exclusive selection
+headSelect.addEventListener('change', () => {
+  if (headSelect.value !== '') armorSelect.value = '';
+  recalc();
+});
+
+armorSelect.addEventListener('change', () => {
+  if (armorSelect.value !== '') headSelect.value = '';
+  recalc();
+});
+
+// theme toggle
+function setTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  themeToggle.innerHTML = theme === 'light' ? '&#9790;' : '&#9788;';
+  localStorage.setItem('dfc-theme', theme);
+}
+
+const savedTheme = localStorage.getItem('dfc-theme') || 'dark';
+setTheme(savedTheme);
+
+themeToggle.addEventListener('click', () => {
+  const current = document.documentElement.getAttribute('data-theme');
+  setTheme(current === 'light' ? 'dark' : 'light');
+});
+
+// auto recalc on input
+currentDurabilityInput.addEventListener('input', recalc);
+currentMaxInput.addEventListener('input', recalc);
+
+function getSelectedEquipment() {
+  if (headSelect.value !== '') {
+    return { type: 'head', ...CONFIG.head[parseInt(headSelect.value)] };
+  }
+  if (armorSelect.value !== '') {
+    return { type: 'armor', ...CONFIG.armor[parseInt(armorSelect.value)] };
+  }
+  return null;
+}
+
+function round1(v) { return Math.round(v * 10) / 10; }
+
+function calcInGame(equip, cur, max) {
+  if (max <= 0) return null;
+  const ratio = (max - cur) / max;
+  const logTerm = Math.log10(max / equip.init);
+  const repairedMax = max - max * ratio * (equip.loss - logTerm);
+  const repaired = round1(repairedMax);
+  if (repaired <= 0) return { repaired: 0, consumptions: null, sellable: false };
+
+  const delta = repaired - cur;
+  const mKeys = ['m1', 'm2', 'm3', 'm4'];
+  let consumptions = null;
+  if (delta > 0) {
+    consumptions = mKeys.map(k => {
+      const eff = equip[k];
+      if (eff === 0) return Infinity;
+      return Math.round(delta / eff);
+    });
+  }
+  const sellable = repaired >= equip.sell;
+  return { repaired, consumptions, sellable };
+}
+
+function calcOutGame(equip, cur, max, type) {
+  const maxInt = Math.floor(max);
+  if (maxInt <= 0) return null;
+
+  // feasibility check from original script
+  const minLimit = type === 'armor' ? 10 : 5;
+  if (maxInt < minLimit) {
+    return { feasible: false, reason: `当前${type === 'armor' ? '护甲' : '头盔'}上限(${maxInt})小于${minLimit}，不可维修`, repaired: null, sellable: false };
+  }
+
+  const term1 = (maxInt - cur) / maxInt;
+  const logValue = maxInt / equip.init;
+  if (logValue <= 0) return null;
+  const term2 = equip.loss - Math.log10(logValue);
+  const repairedUpper = maxInt - maxInt * term1 * term2;
+  let finalUpper = Math.floor(repairedUpper);
+  if (finalUpper < 1) finalUpper = 1;
+
+  const sellable = finalUpper >= equip.sell;
+  return { feasible: true, repaired: finalUpper, sellable };
+}
+
+function formatConsumption(v) {
+  if (v === Infinity) return '无穷大';
+  if (v === null || v === undefined) return '--';
+  return String(v);
+}
+
+function recalc() {
+  const equip = getSelectedEquipment();
+  const curRaw = currentDurabilityInput.value.trim();
+  const maxRaw = currentMaxInput.value.trim();
+
+  if (!equip || curRaw === '' || maxRaw === '') {
+    resultsSection.style.display = 'none';
+    placeholderSection.style.display = 'block';
+    return;
+  }
+
+  const cur = parseFloat(curRaw);
+  const max = parseFloat(maxRaw);
+
+  if (isNaN(cur) || isNaN(max)) {
+    resultsSection.style.display = 'none';
+    placeholderSection.style.display = 'block';
+    return;
+  }
+
+  if (cur > max) {
+    resultsContent.innerHTML = '<div class="error-msg">当前耐久不能大于当前耐久上限</div>';
+    resultsSection.style.display = 'block';
+    placeholderSection.style.display = 'none';
+    return;
+  }
+
+  const inGame = calcInGame(equip, cur, max);
+  const outGame = calcOutGame(equip, cur, max, equip.type);
+
+  let html = '';
+
+  // ---- out-game repair ----
+  html += '<div class="result-block"><div class="result-method">局外维修</div>';
+  if (!outGame) {
+    html += '<div class="result-row"><span class="result-label">维修后耐久上限</span><span class="result-value bad">计算错误</span></div>';
+  } else if (!outGame.feasible) {
+    html += `<div class="result-row"><span class="result-label">维修后耐久上限</span><span class="result-value bad">${outGame.reason}</span></div>`;
+  } else {
+    html += `<div class="result-row"><span class="result-label">维修后耐久上限</span><span class="result-value highlight">${outGame.repaired}</span></div>`;
+  }
+  html += '</div>';
+
+  // ---- in-game repair (repaired max only) ----
+  html += '<div class="divider"></div>';
+  html += '<div class="result-block"><div class="result-method">局内维修</div>';
+  if (!inGame || inGame.repaired <= 0) {
+    html += '<div class="result-row"><span class="result-label">维修后耐久</span><span class="result-value bad">无法维修（结果小于等于0）</span></div>';
+  } else {
+    html += `<div class="result-row"><span class="result-label">维修后耐久上限</span><span class="result-value highlight">${inGame.repaired.toFixed(1)}</span></div>`;
+  }
+  html += '</div>';
+
+  // ---- sellable ----
+  html += '<div class="divider"></div>';
+  html += '<div class="result-block"><div class="result-method">可出售判定</div>';
+  html += `<div class="result-row"><span class="result-label">最低可出售耐久</span><span class="result-value">${equip.sell}</span></div>`;
+  html += renderSellableRow('局内维修后', inGame);
+  html += renderSellableRow('局外维修后', outGame);
+  html += '</div>';
+
+  // ---- consumption points (last) ----
+  html += '<div class="divider"></div>';
+  html += '<div class="result-block"><div class="result-method">消耗维修点数</div>';
+  if (!inGame || inGame.repaired <= 0) {
+    html += '<div class="result-row"><span class="result-label"></span><span class="result-value bad">无法维修</span></div>';
+  } else if (inGame.consumptions) {
+    for (let i = 0; i < 4; i++) {
+      html += `<div class="result-row"><span class="result-label">${PACKAGE_NAMES[i]}</span><span class="result-value">${formatConsumption(inGame.consumptions[i])}</span></div>`;
+    }
+  } else {
+    html += '<div class="result-row"><span class="result-label"></span><span class="result-value">无需消耗</span></div>';
+  }
+  html += '</div>';
+
+  resultsContent.innerHTML = html;
+  resultsSection.style.display = 'block';
+  placeholderSection.style.display = 'none';
+}
+
+function renderSellableRow(label, result) {
+  if (!result || result.repaired === null || result.repaired === undefined || result.reason) {
+    return `<div class="result-row"><span class="result-label">${label}</span><span class="result-value bad">--</span></div>`;
+  }
+  const badge = result.sellable
+    ? '<span class="sellable-badge sellable-yes">可出售</span>'
+    : '<span class="sellable-badge sellable-no">不可出售</span>';
+  return `<div class="result-row"><span class="result-label">${label}</span><span class="result-value">${badge}</span></div>`;
+}
+</script>
+</body>
+</html>
