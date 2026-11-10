@@ -30,6 +30,12 @@
     --highlight: #f59e0b;
     --good: #4ade80;
     --bad: #ef4444;
+    --ad-bg: #23201a;
+    --ad-border: #4a4030;
+    --ad-stripe-a: #f59e0b;
+    --ad-stripe-b: #17140f;
+    --ad-chip-bg: #1b1813;
+    --ad-chip-border: #4a4030;
     --chevron: %236b7280;
   }
 
@@ -55,6 +61,12 @@
     --highlight: #d97706;
     --good: #16a34a;
     --bad: #dc2626;
+    --ad-bg: #fffaf0;
+    --ad-border: #e0cda0;
+    --ad-stripe-a: #d97706;
+    --ad-stripe-b: #3f3a30;
+    --ad-chip-bg: #ffffff;
+    --ad-chip-border: #d6c397;
     --chevron: %239ca3af;
   }
 
@@ -197,6 +209,80 @@
   select.eq-select option.q5 { color: #d97706; }
   select.eq-select option.q6 { color: #ef4444; }
 
+  /* promo banner */
+  .promo {
+    position: relative;
+    overflow: hidden;
+    background: var(--ad-bg);
+    border: 1px solid var(--ad-border);
+    border-radius: 8px;
+    padding: 14px 16px 14px 24px;
+    margin-bottom: 16px;
+    animation: promo-in 0.45s ease-out both;
+  }
+  .promo::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 8px;
+    background: repeating-linear-gradient(-45deg, var(--ad-stripe-a) 0 6px, var(--ad-stripe-b) 6px 12px);
+  }
+  .promo-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--text-heading);
+    letter-spacing: 0.03em;
+    line-height: 1.45;
+    margin-bottom: 6px;
+  }
+  .promo-pitch {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+  .promo-amount {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--highlight);
+    margin: 0 2px;
+  }
+  .promo-contact {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+  }
+  .promo-chip {
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-heading);
+    background: var(--ad-chip-bg);
+    border: 1px solid var(--ad-chip-border);
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .promo-chip:hover { border-color: var(--highlight); color: var(--highlight); }
+  .promo-chip:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .promo-chip.copied { border-color: var(--good); color: var(--good); }
+
+  @keyframes promo-in {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .promo { animation: none; }
+    .promo-chip { transition: none; }
+  }
+
   /* results */
   .result-block { margin-bottom: 20px; }
   .result-block:last-child { margin-bottom: 0; }
@@ -281,6 +367,17 @@
     <h1>三角洲装备维修计算器</h1>
     <button class="theme-toggle" id="themeToggle" title="切换主题">&#9788;</button>
   </div>
+
+  <!-- promo banner -->
+  <aside class="promo" aria-label="推广信息">
+    <div class="promo-title">三角洲特勤处收菜制造代挂</div>
+    <div class="promo-pitch">每账号每月躺赚<span class="promo-amount">100元</span></div>
+    <div class="promo-contact">
+      <span>感兴趣咨询</span>
+      <button type="button" class="promo-chip" data-copy="551603356" title="点击复制 QQ 号">QQ551603356</button>
+      <button type="button" class="promo-chip" data-copy="EZ66100" title="点击复制微信号">微信EZ66100</button>
+    </div>
+  </aside>
 
   <!-- equipment selection -->
   <div class="section">
@@ -423,6 +520,31 @@ setTheme(savedTheme);
 themeToggle.addEventListener('click', () => {
   const current = document.documentElement.getAttribute('data-theme');
   setTheme(current === 'light' ? 'dark' : 'light');
+});
+
+// promo banner: click to copy contact ids
+document.querySelectorAll('.promo-chip').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const text = btn.dataset.copy;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (e) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e2) {}
+      ta.remove();
+    }
+    const original = btn.textContent;
+    btn.textContent = '已复制';
+    btn.classList.add('copied');
+    clearTimeout(btn._restoreTimer);
+    btn._restoreTimer = setTimeout(() => {
+      btn.textContent = original;
+      btn.classList.remove('copied');
+    }, 1200);
+  });
 });
 
 // auto recalc on input
